@@ -1,8 +1,15 @@
 # ok-ww 云·鸣潮补丁（Windows 10）
 
+[![platform](https://img.shields.io/badge/platform-Windows%2010%2B-blue)](https://github.com/Moore-king/okww-cloud-patch)
+[![ok-ww](https://img.shields.io/badge/ok--ww-v3.8.13-informational)](https://github.com/ok-oldking/ok-wuthering-waves)
+[![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![version](https://img.shields.io/badge/version-v0.1.0-orange)](CHANGELOG.md)
+
 让 [ok-ww](https://github.com/ok-oldking/ok-wuthering-waves) 在 **Windows 10** 上启用内置的「网页云游戏」模式，支持对**云·鸣潮**（`mc.kurogames.com/cloud`）截图并跑自动化。
 
 > 不改 ok-ww 任何源码，只在它自带的 Python 里放两个文件；ok-ww 的 git 增量更新不会冲突。
+>
+> [English](README.en.md) | 中文
 
 ## 一、解决什么问题
 
@@ -110,6 +117,30 @@ uninstall.cmd D:\ok-ww
 - **不能**接管你自己通过 Edge 安装的「云·鸣潮」PWA 窗口：ok-ww 用的是自己启动的 Playwright 窗口（独立配置目录，需要单独登录一次）
 - 第 4 项依赖 Edge 的特性名 `msEdgeMouseGestureSupported` / `msEdgeMouseGestureDefaultEnabled`，若微软改名则该条失效（其余不受影响）
 - 请勿把这个窗口最大化：会破坏固定视口，导致抓帧失败
+
+## 六之二、常见问题（FAQ）
+
+**Q：设备下拉里有「云游戏 (Cloud)」，但显示 Disconnected？**
+正常。它要等你选中并开始任务时才会启动浏览器窗口，之前的连接状态是空的。
+
+**Q：每次都要重新登录通行证吗？**
+不用。登录态保存在 `working\cache\playwright`，只有第一次需要登录。
+
+**Q：ok-ww 更新后补丁会失效吗？**
+不会。补丁在 `python\Lib\site-packages`，更新只替换 `working\` 的代码。只有**整包重装**（重新解压 7z）会丢，重跑一次 `install.cmd` 即可。
+
+**Q：能跑原生 1080p 吗？**
+窗口化方式不行：1080p 视口加上浏览器边框需要 1110px 高度，1080p 屏幕放不下，所以自动退到 1600×900。2K/4K 显示器会自动使用 1920×1080。
+
+**Q：任务跑到一半不动了？**
+先确认浏览器窗口没有被最大化或改变大小。程序内置抓帧看门狗，连续 10 秒没有新画面会自动重建捕获；如果仍不动，重启 ok-ww。
+
+**Q：日志在哪？**
+- ok-ww 运行日志：`working\logs\ok-script.log`
+- 补丁日志：`data\apps\ok-ww\cloud\hook.log`（每次启动会追加，可随时清空）
+
+**Q：想恢复原版？**
+运行 `uninstall.cmd`，或手动删除 `site-packages` 下的 `okww_cloud.pth` 与 `okww_cloud_hook.py`。
 
 ## 七、免责声明
 

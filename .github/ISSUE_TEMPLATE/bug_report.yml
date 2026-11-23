@@ -1,0 +1,73 @@
+name: 问题反馈 / Bug report
+description: 云游戏设备不出现、抓不到画面、任务卡住等
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。请尽量把下面的信息填完整，尤其是日志，否则很难定位。
+        如果只是安装/使用问题，也可以先看 README 的「常见问题」。
+
+  - type: input
+    id: okww-version
+    attributes:
+      label: ok-ww 版本
+      description: 在 ok-ww 窗口标题栏可以看到，例如 v3.8.13
+      placeholder: v3.8.13
+    validations:
+      required: true
+
+  - type: input
+    id: windows-build
+    attributes:
+      label: Windows 版本
+      description: 运行 `winver` 查看，例如 Windows 10 22H2 (19045)
+      placeholder: Windows 10 22H2 (19045)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: symptom
+    attributes:
+      label: 现象
+      options:
+        - 设备下拉里没有「云游戏 (Cloud)」
+        - 有设备，但抓不到画面（全黑/不刷新）
+        - 任务跑到一半卡住不动
+        - 角色原地反复放大招
+        - 浏览器窗口被手势/点击导航走了
+        - 其它（在下面描述）
+    validations:
+      required: true
+
+  - type: textarea
+    id: detail
+    attributes:
+      label: 具体描述
+      description: 做了什么操作、期望是什么、实际发生了什么
+      placeholder: 选中云游戏设备后窗口打开，但 ok-ww 一直显示未连接……
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志（重要）
+      description: |
+        请贴出以下文件最后 30~50 行：
+        - `data\apps\ok-ww\cloud\hook.log`（补丁日志）
+        - `working\logs\ok-script.log`（运行日志，可只贴报错部分）
+      render: text
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 确认项
+      options:
+        - label: 我已重启过 ok-ww（补丁需要重启才生效）
+          required: true
+        - label: 我确认没有把云游戏窗口最大化或改变大小
+          required: false
