@@ -34,34 +34,32 @@ ok-ww 从 v3.8.4 起重新支持了网页云游戏（Playwright 启动 Edge + Wi
 
 没有改动的：战斗循环、任务流程、识别阈值、输入方式，都是 ok-ww 原版行为。
 
-## 二之二、为什么 Windows 10 也能用（作者为什么把它排除在外）
+## 二之二、为什么 Windows 10 其实能用
 
-很多人看到“作者只支持 Win11”就以为 WGC 在 Win10 上不能用。实际不是。
-
-ok-ww 里有**两个**版本门槛常量：
+Windows Graphics Capture 从 Windows 10 1803（17134）起就存在。ok-ww 里有两个版本常量：
 
 ```python
-WGC_MIN_BUILD = 19041            # WGC 本身能用的最低版本：Win10 2004
-WGC_NO_BORDER_MIN_BUILD = 20348  # 能关掉捕获黄框的最低版本：Win11 22H2 / Server 2022
+WGC_MIN_BUILD = 19041            # WGC 本身可用的最低版本：Win10 2004
+WGC_NO_BORDER_MIN_BUILD = 20348  # 可关闭捕获边框（IsBorderRequired）的最低版本：Win11 22H2 / Server 2022
 ```
 
-但 `ok/util/window.py` 里的 `windows_graphics_available()` **只判断了 20348**，`WGC_MIN_BUILD` 定义了却没被引用：
+`ok/util/window.py` 里的 `windows_graphics_available()` 使用的是后者：
 
 ```python
 def windows_graphics_available():
-    if WINDOWS_BUILD_NUMBER >= WGC_NO_BORDER_MIN_BUILD:   # ← 只认 20348
+    if WINDOWS_BUILD_NUMBER >= WGC_NO_BORDER_MIN_BUILD:
         ...
 ```
 
-也就是说，作者的需求其实是“**无边框捕获**”——云游戏要按 1080p 精确裁剪，带黄框会影响坐标计算。而无边框 API（`IsBorderRequired`）只有 20348+ 才有，于是整个云游戏模式在 Win10 上被一并关掉了。这更像用一个更严的常量代替了原本的常量，而不是“Win10 技术上做不到”。
+因此在 Windows 10（例如 19044）上该函数返回 False，`DeviceManager.update_browser_device()` 不会注册云游戏设备，设备下拉里就看不到「云游戏」。
 
-实际验证（Windows 10 19044 + Edge + 云·鸣潮）：
+实测环境（Windows 10 19044 + Edge + 云·鸣潮）：
 
-- WGC 能正常捕获 Edge 窗口，包括 WebRTC 视频画面，帧率与画面完整
-- 唯一区别是窗口外围会出现一条系统绘制的黄色捕获边框
-- ok-ww 本来就按渲染区坐标裁剪，边框落在裁剪范围之外，截图里看不到，也不影响识别
+- WGC 可以正常捕获 Edge 窗口，包括 WebRTC 视频画面，画面完整
+- 与 20348+ 的唯一可见差别是窗口外围多一条系统绘制的黄色捕获边框
+- ok-ww 本来就按渲染区坐标裁剪，这条边框落在裁剪范围之外，不进截图，也不影响识别
 
-所以本补丁把门槛降到 19041，接受这条边框存在即可。
+本补丁把门槛降到 `WGC_MIN_BUILD`（19041），其余逻辑不变。
 
 ## 三、安装
 
