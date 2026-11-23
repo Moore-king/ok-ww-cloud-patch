@@ -175,6 +175,38 @@ def _install_browser_patch(module):
     _log("patched BrowserCaptureMethod watchdog")
 
 
+def _install_liberation_patch(module):
+    """Treat a started liberation cooldown as a successful cast.
+
+    BaseChar.click_liberation() confirms the ultimate by waiting 0.4s for the
+    character's portrait text to vanish from the team bar (in_team()). On a
+    streamed client at 1600x900 that template often keeps matching, so every cast
+    is reported as "clicked liberation but no effect" and the character stands
+    still retrying. A started cooldown is a far more reliable signal.
+    """
+    cls = getattr(module, "BaseChar", None)
+    if cls is None or not hasattr(cls, "click_liberation") or getattr(cls, "_okww_liberation_fix", False):
+        return
+    original = cls.click_liberation
+
+    def click_liberation(self, *args, **kwargs):
+        result = original(self, *args, **kwargs)
+        if result:
+            return result
+        try:
+            if self.task.has_cd("liberation", self.index):
+                self.task.in_liberation = True
+                _log("liberation: cooldown started after click, treated as success")
+                return True
+        except Exception as error:
+            _log(f"liberation fallback failed: {error}")
+        return result
+
+    cls.click_liberation = click_liberation
+    cls._okww_liberation_fix = True
+    _log("patched BaseChar.click_liberation (cooldown counts as success)")
+
+
 def _apply_all():
     """Patch every relevant module that is currently loaded.
 
@@ -190,6 +222,8 @@ def _apply_all():
             _install_browser_patch(loaded)
         elif name == "config":
             _install_config_patch(loaded)
+        elif name == "src.char.BaseChar":
+            _install_liberation_patch(loaded)
 
 
 _real_import = builtins.__import__
@@ -198,7 +232,7 @@ _real_import = builtins.__import__
 def _patched_import(name, globals=None, locals=None, fromlist=(), level=0):
     module = _real_import(name, globals, locals, fromlist, level)
     try:
-        if name == "config" or name == "ok" or name.startswith("ok."):
+        if name == "config" or name == "ok" or name.startswith("ok.") or name.startswith("src."):
             _apply_all()
     except Exception as error:
         _log(f"patch error for {name}: {error}")
