@@ -1,0 +1,7 @@
+# batch 文件必须是 CRLF，否则 cmd 的标签跳转可能失效
+*.cmd text eol=crlf
+*.bat text eol=crlf
+# Python 侧保持 LF
+*.py  text eol=lf
+*.pth text eol=lf
+*.md  text eol=lf
