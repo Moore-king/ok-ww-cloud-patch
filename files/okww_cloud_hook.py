@@ -175,38 +175,6 @@ def _install_browser_patch(module):
     _log("patched BrowserCaptureMethod watchdog")
 
 
-def _install_liberation_patch(module):
-    """Treat a started liberation cooldown as a successful cast.
-
-    BaseChar.click_liberation() confirms the ultimate by waiting 0.4s for the
-    character's portrait text to vanish from the team bar (in_team()). On a
-    streamed client at 1600x900 that template often keeps matching, so every cast
-    is reported as "clicked liberation but no effect" and the character stands
-    still retrying. A started cooldown is a far more reliable signal.
-    """
-    cls = getattr(module, "BaseChar", None)
-    if cls is None or not hasattr(cls, "click_liberation") or getattr(cls, "_okww_liberation_fix", False):
-        return
-    original = cls.click_liberation
-
-    def click_liberation(self, *args, **kwargs):
-        result = original(self, *args, **kwargs)
-        if result:
-            return result
-        try:
-            if self.task.has_cd("liberation", self.index):
-                self.task.in_liberation = True
-                _log("liberation: cooldown started after click, treated as success")
-                return True
-        except Exception as error:
-            _log(f"liberation fallback failed: {error}")
-        return result
-
-    cls.click_liberation = click_liberation
-    cls._okww_liberation_fix = True
-    _log("patched BaseChar.click_liberation (cooldown counts as success)")
-
-
 def _apply_all():
     """Patch every relevant module that is currently loaded.
 
@@ -222,8 +190,9 @@ def _apply_all():
             _install_browser_patch(loaded)
         elif name == "config":
             _install_config_patch(loaded)
-        elif name == "src.char.BaseChar":
-            _install_liberation_patch(loaded)
+        # src.char.BaseChar 补丁已移除：战斗判定不属于云游戏适配范围
+        elif name == "src.task.BaseCombatTask":
+            pass  # 云游戏战斗判定类补丁已回滚：实测会导致大招不放、切人失败、CPU 打满
 
 
 _real_import = builtins.__import__
